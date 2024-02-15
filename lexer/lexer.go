@@ -1,12 +1,12 @@
 package lexer
 
-import "code.byted.org/motor/Lang/01/src/token"
+import "github.com/sjmshsh/Lang/token"
 
 type Lexer struct {
 	input        string
-	position     int  // 所输入字符串中的当前位置（指向当前字符）
-	readPosition int  // 所输入字符串中的当前读取位置（指向当前字符之后的一个字符）
-	ch           byte // 当前正在查看的字符
+	position     int  // current position in input (points to current char)
+	readPosition int  // current reading position in input (after current char)
+	ch           byte // current char under examination
 }
 
 func New(input string) *Lexer {
@@ -15,8 +15,6 @@ func New(input string) *Lexer {
 	return l
 }
 
-// NextToken 检查当前正在查看的字符l.ch, 根据具体的字符来返回对应的词法单元
-// 在返回词法单元之前, 位于所输入的字符串中的指针会前移, 因此之后再调用这个方法的时候, l.ch字段就已经更新过了
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
@@ -32,6 +30,10 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.ASSIGN, l.ch)
 		}
+	case '+':
+		tok = newToken(token.PLUS, l.ch)
+	case '-':
+		tok = newToken(token.MINUS, l.ch)
 	case '!':
 		if l.peekChar() == '=' {
 			ch := l.ch
@@ -41,10 +43,6 @@ func (l *Lexer) NextToken() token.Token {
 		} else {
 			tok = newToken(token.BANG, l.ch)
 		}
-	case '+':
-		tok = newToken(token.PLUS, l.ch)
-	case '-':
-		tok = newToken(token.MINUS, l.ch)
 	case '/':
 		tok = newToken(token.SLASH, l.ch)
 	case '*':
@@ -55,6 +53,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.GT, l.ch)
 	case ';':
 		tok = newToken(token.SEMICOLON, l.ch)
+	case ':':
+		tok = newToken(token.COLON, l.ch)
 	case ',':
 		tok = newToken(token.COMMA, l.ch)
 	case '{':
@@ -65,6 +65,13 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LPAREN, l.ch)
 	case ')':
 		tok = newToken(token.RPAREN, l.ch)
+	case '"':
+		tok.Type = token.STRING
+		tok.Literal = l.readString()
+	case '[':
+		tok = newToken(token.LBRACKET, l.ch)
+	case ']':
+		tok = newToken(token.RBRACKET, l.ch)
 	case 0:
 		tok.Literal = ""
 		tok.Type = token.EOF
@@ -92,10 +99,8 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
-// 读取input中的下一个字符串, 并前移其在input中的位置.
 func (l *Lexer) readChar() {
 	if l.readPosition >= len(l.input) {
-		// 如果已经到达input的末尾, 将l.ch设置成0.这是NUL字符的ASCII编码, 用来表示尚未读取任何内容或者文件结尾
 		l.ch = 0
 	} else {
 		l.ch = l.input[l.readPosition]
@@ -128,6 +133,17 @@ func (l *Lexer) readNumber() string {
 	return l.input[position:l.position]
 }
 
+func (l *Lexer) readString() string {
+	position := l.position + 1
+	for {
+		l.readChar()
+		if l.ch == '"' || l.ch == 0 {
+			break
+		}
+	}
+	return l.input[position:l.position]
+}
+
 func isLetter(ch byte) bool {
 	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
 }
@@ -137,8 +153,5 @@ func isDigit(ch byte) bool {
 }
 
 func newToken(tokenType token.TokenType, ch byte) token.Token {
-	return token.Token{
-		Type:    tokenType,
-		Literal: string(ch),
-	}
+	return token.Token{Type: tokenType, Literal: string(ch)}
 }

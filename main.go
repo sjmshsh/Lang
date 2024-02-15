@@ -1,8 +1,8 @@
 package main
 
 import (
-	"code.byted.org/motor/Lang/01/src/repl"
 	"fmt"
+	"github.com/sjmshsh/Lang/repl"
 	"os"
 	"os/user"
 )
@@ -12,7 +12,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Hello %s!这里是李鑫阳的自创编程语言!\n",
+	fmt.Printf("Hello %s! This is the Monkey programming language!\n",
 		user.Username)
 	fmt.Printf("Feel free to type in commands\n")
 	repl.Start(os.Stdin, os.Stdout)
